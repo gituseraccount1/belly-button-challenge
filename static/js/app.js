@@ -2,88 +2,135 @@
 // Constant to hold the URL
 const url = 'https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json';
 
-// STEP 2. Create horizontal bar chart with a dropdown menu to display 
-// the top 10 OTUs found in that individual
-// Use sample_values as the values for the bar chart.
-// Use otu_ids as the labels for the bar chart.
-// Use otu_labels as the hovertext for the chart.
+// Initializes the page with a default plot
+function init() {
+  d3.json(url).then(function(data) {
+  // console.log(data);
+  // console.log(data.samples[0].id)
 
+  // Loop through all the name list and add all the names to the dropdown menu
+    for (let i = 0; i < data.names.length; i++) {
+      let dropdownNameList = d3.select('#selDataset');
+      let addOption = dropdownNameList.append("option").text(data.names[i]);
+    };
 
-d3.json(url).then(function(data) {
-        console.log(data);
-        // let nameList = data.names;
-        // console.log(nameList); // prints out the names array
+    let id = data.names[0];
+    displayThings(id);
+  });
+}
 
-        // created a loop to add in all the names to the dropdown menu
-        for (let i = 0; i < data.names.length; i++) {
-                let dropdownNameList = d3.select('#selDataset');
-                let addOption = dropdownNameList.append("option").text(data.names[i]);
-                addOption.attr("value", data.names[i]);
-        };
-                
-                
-        let barData = [];
-        for (let i = 0; i < data.samples[0].otu_ids.length; i++) {
-                // let id = console.log('ID:', data.samples[0].id);
-                // let otuID = console.log('otu id', data.samples[i].otu_ids[i]);
-                // let sampleValue = console.log('Sample value:', data.samples[i].sample_values[i]); 
-                // let otuLabels = console.log('otu labels:', data.samples[i].otu_labels[i]);
-                        
-                let newDictionary = {
-                        //"ID" : data.samples[0].id,
-                        otuID : data.samples[0].otu_ids[i],
-                        SampleValue : data.samples[0].sample_values[i],
-                        outLabels : data.samples[0].otu_labels[i]    
-                };
+function displayThings(subjectID) {
+  // console.log(subjectID);
 
-                barData.push(newDictionary);
-        };    
-                
-        console.log(barData);
+  d3.json(url).then(function(data) {
+    
+    // Displaying the metadata for the selected subjectID, which is in an array. Code lines 28-41
+    let metadata = data.metadata 
+    let metadataForSubjectID = metadata.filter(item => item.id == subjectID);
 
-        // Sort the data by Greek search results descending
-        // let sortedBar = barData.sort((a, b) => b.SampleValue - a.SampleValue); 
-        // console.log(sortedBar);
-        // Slice the first 10 objects for plotting
-        let slicedData = barData.slice(0, 10);
-        console.log(slicedData);
-        // Reverse the array to accommodate Plotly's defaults
-        let reversedData = slicedData.sort((a, b) => b.SampleValue - a.SampleValue);
-        console.log(reversedData);
+    //To get the first item in the array, which is the metadata in a dictionary
+    let metadataInfo = metadataForSubjectID[0];
+    
+    // This is the blank out the sample-metadata id area in the HTML code before the select subject id metadata is displayed. Without this, 
+    // each time you select a new subject ID from the dropdown menu, the newdata will be added to this area --- not what we want
+    d3.select("#sample-metadata").html("");
 
-        // Trace1 
-        let trace1 = [{
-                x: reversedData.map(row => row.SampleValue),
-                y: reversedData.map(row => row.otuID),
-                text: reversedData.map(row => row.outLabels),
-                type: "bar",
-                orientation: "h"
-        }];
+    // Adding the key pair value into the sample-metadata id in the HTML code. 
+    Object.entries(metadataInfo).forEach(([key,value]) => {
+      d3.select("#sample-metadata").append("h5").text(`${key}: ${value}`);
+    });
 
-        // Render the plot to the div tag with id "bar"
-        Plotly.newPlot("bar", trace1);
-        });
+    //Getting data for the bar and bubble chart. Code lines 44 - 63
+    function getSubjectData(subjectID, allData) {
+      let matchArray = allData.find(item => item.id === subjectID);
+      let subjectData = matchArray;
+      // console.log(subjectData);
+      return subjectData;
+    }
 
+    // let metadata = getSubjectData(subjectID, data.metadata);
+    let subjectSamples = getSubjectData(subjectID, data.samples);
+    let sampleValues = Object.values(subjectSamples.sample_values);
+    let otuIDs = Object.values(subjectSamples.otu_ids);
+    let outLabels = Object.values(subjectSamples.otu_labels);
 
-        
+    let slicedS = sampleValues.slice(0,10);
+    let slicedO = otuIDs.map(subjectID => `OTU ${subjectID}`).slice(0, 10);
+    let slicedL = outLabels.slice(0, 10);
+
+    let reversedDataS = slicedS.reverse();
+    let reversedDataO = slicedO.reverse();
+    let reversedDataL = slicedL.reverse();
+    
+    // Default Bar Chart
+    let defaultBarChart = [{
+      x: reversedDataS,
+      y: reversedDataO,
+      text: reversedDataL,
+      type: "bar",
+      orientation: "h"
+    }];
+
+    // Default Bar Chart Layout
+    let layoutBar = { 
+      title: "Top 10 OTU for Test Object ID " + subjectID,
+      width: 400,
+      height: 500,
+    };
+
+    // Default Bubble Chart
+    let defaultBubbleChart = [{
+      x: otuIDs,
+      y: sampleValues,
+      text: outLabels,
+      mode: 'markers',
+      marker: {
+        size: sampleValues,
+        color: otuIDs,
+        opacity: .70
+      }
+    }];
+
+    // Default Bubble Chart Layout
+    let layoutBubble = { 
+      title: "All OTUs Found in Test Object " + subjectID,
+      showlegend: false,
+      width: 1100,
+      height: 500
+    };
+
+    // Default Metadata Layout
+    let layoutMetadata = { 
+      title: "All OTUs Found in Test Object " + subjectID,
+      showlegend: false,
+      width: 1100,
+      height: 500
+    };
+    
+    // Render the plot to the div tag with id "bar"
+    Plotly.newPlot("bar", defaultBarChart, layoutBar);
+    Plotly.newPlot("bubble", defaultBubbleChart, layoutBubble);
+  });
+}
+
 // On change to the DOM, call getData()
 d3.selectAll("#selDataset").on("change", optionChanged);
 
+// Function called by DOM changes
+function optionChanged() {
+  let dropdownMenu = d3.select("#selDataset");
+  // Assign the value of the dropdown menu option to a letiable
+  let dataset = dropdownMenu.property("value");
+  console.log(dataset); // Testing - see what dataset variable is saving, it is saving the ID choosen in the dropdown menu
 
-// let perID = d3.json(url).then(function(data) {
-//         console.log('ID:', data.samples[1].id);      
-// });
+  // Update the Top 10 OTU for the selected ID from the dropdown menu
+  d3.json(url).then(function(data) {
+    let test = Object.values(data.samples[1]);
+    // console.log(`line 109 ${test}`)
+  });
 
-// let otuID = d3.json(url).then(function(data) {
-//         console.log('out ID:', data.samples[1].otu_ids[1]);      
-// });
+  displayThings(dataset);
+};
 
-// let sampleValues = d3.json(url).then(function(data) {
-//         console.log('Sample value:', data.samples[1].sample_values[1]);      
-// });
 
-// let otuLabels= d3.json(url).then(function(data) {
-//         console.log('out labels:', data.samples[1].otu_labels[1]);      
-// });
-
-          
+init();

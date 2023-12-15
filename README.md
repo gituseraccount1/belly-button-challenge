@@ -7,6 +7,8 @@ http://robdunnlab.com/projects/belly-button-biodiversity/
 ### Goal:
 Create an interactive dashboard from the data set.
 
-Step 1: Use the D3 library to read in the json from the following URL: https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json. I was able to console.log the data and see the data we are working with. I have commented other codes to see how I was able to get the to data needed to create the horizantal bar chart. 
+Step 1: Use the D3 library to read in the json from the following URL: https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json. 
+
+I want to thank Kourt Bailey (tutor) and Lori Andler for helping me with this challenge!
 
 
